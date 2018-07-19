@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "832161229630",
+    "firebase_url": "https://test-21f2c.firebaseio.com",
+    "project_id": "test-21f2c",
+    "storage_bucket": "test-21f2c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832161229630:android:ee2e1717642c2901",
+        "android_client_info": {
+          "package_name": "ca.nanonorth.chatr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "832161229630-gppetnckbigjudn5r49akqghntvh25cd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7ZgxI2aXiwzns_blusc8j1rNtfv8SU7Q"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
