@@ -2,32 +2,34 @@ package ca.nanonorth.chatr.activities
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
 import android.os.Parcelable
+import android.support.v4.app.DialogFragment
+import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentTransaction
-import android.util.Log
-import android.widget.ArrayAdapter
+import android.support.v4.view.GravityCompat
+import android.support.v4.widget.DrawerLayout
+import android.view.View
 import android.widget.SimpleAdapter
-import android.widget.Toast
 import ca.nanonorth.chatr.models.ChatRoom
 import ca.nanonorth.chatr.R
 import ca.nanonorth.chatr.fragments.UserDialogFragment
 import ca.nanonorth.chatr.managers.Constants
 import ca.nanonorth.chatr.models.Author
-import ca.nanonorth.chatr.services.PushNotificationService
 import com.github.kittinunf.fuel.android.extension.responseJson
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_appbar.*
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.startActivityForResult
-import org.jetbrains.anko.uiThread
 import org.json.JSONArray
 import org.json.JSONObject
-import java.lang.ref.WeakReference
+import kotlinx.android.synthetic.main.nav_header.view.*
+import android.support.design.widget.NavigationView
+
+
 class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInteractionListener {
 
     private var listChatRooms: ArrayList<ChatRoom> = ArrayList()
@@ -36,10 +38,13 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
 
     private var userDialog: UserDialogFragment? = null
 
+    private lateinit var mDrawerLayout: DrawerLayout
+    private var navigation: NavigationView? = null
 
 
     override fun onUserListItemClick(user: Author) {
-        this@MainActivity.userDialog!!.dismiss()
+
+        dismissAllDialogs(userDialog!!.fragmentManager!!)
 
         val usersMap : MutableMap<String, Author> = HashMap()
         usersMap.put(chatrManager!!.author!!.id, chatrManager!!.author!!)
@@ -88,6 +93,19 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
 
     }
 
+    private fun dismissAllDialogs(manager: FragmentManager) {
+        val fragments = manager.getFragments() ?: return
+
+        for (fragment in fragments) {
+            if (fragment is DialogFragment) {
+                fragment.dismissAllowingStateLoss()
+            }
+
+            val childFragmentManager = fragment.childFragmentManager
+            dismissAllDialogs(childFragmentManager!!)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -107,6 +125,13 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
 //        GetChatroomsTask(this).execute(chatrManager!!.mAuth.currentUser!!.uid)
         getChatRooms()
 
+
+
+        setSupportActionBar(toolbar)
+
+        initNavigation()
+
+
         list_chatrooms.setOnItemClickListener({ _, _, position, id ->
             goToChatRoom(listChatRooms[position])
         })
@@ -115,6 +140,33 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
             showAddUserDialog()
         }
 
+    }
+
+    private fun initNavigation(){
+        mDrawerLayout = findViewById(R.id.drawer_layout)
+
+        val logoView = toolbar.getChildAt(0)
+        logoView.setOnClickListener {
+            mDrawerLayout.openDrawer(GravityCompat.START)
+            mDrawerLayout.nav_drawer_title.text = chatrManager!!.author!!.name
+        }
+
+        navigation = findViewById<View>(R.id.nav_view) as NavigationView
+
+        navigation!!.setNavigationItemSelectedListener {
+            return@setNavigationItemSelectedListener when(it.itemId){
+                R.id.nav_logout -> {
+                    FirebaseAuth.getInstance().signOut()
+                    val intent = Intent(this, SignUpActivity::class.java).apply {
+                        putExtra("email",  chatrManager!!.author!!.getEmail())
+                    }
+
+                    this.startActivity(intent)
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun goToChatRoom(chatRoom: ChatRoom){
@@ -154,20 +206,6 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
         startActivity(homeIntent)
     }
 
-
-//    private class GetChatroomsTask internal constructor(context: MainActivity): AsyncTask<String, Void, String>() {
-//        private val activityReference: WeakReference<MainActivity> = WeakReference(context)
-//
-//        override fun doInBackground(vararg params: String?): String {
-//        }
-//
-//        override fun onPostExecute(result: String) {
-//            val activity = activityReference.get()
-//            if (activity == null || activity.isFinishing) return
-//
-//            activityReference.get()!!.adapter
-//        }
-//    }
 
     private fun convertToAuthorList(users : JSONArray) : ArrayList<Author>{
         val userList : ArrayList<Author> = ArrayList()

@@ -14,6 +14,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 
 import android.content.Intent
+import android.support.v4.view.GravityCompat
+import android.view.MenuItem
 import android.widget.Toast
 import ca.nanonorth.chatr.R
 import ca.nanonorth.chatr.helpers.FirestoreDbHelper
@@ -52,6 +54,7 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
 
         email_sign_in_button.setOnClickListener { attemptLogin() }
     }
+
 
     override fun onResume() {
         super.onResume()

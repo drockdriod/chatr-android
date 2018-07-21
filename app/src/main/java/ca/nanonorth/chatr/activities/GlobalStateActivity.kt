@@ -16,6 +16,7 @@ open class GlobalStateActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         chatrManager = (applicationContext as ChatrApplication).chatrManager
 
+
         setSupportActionBar(toolbar)
     }
 
@@ -24,4 +25,6 @@ open class GlobalStateActivity : AppCompatActivity() {
 
 
     }
+
+
 }

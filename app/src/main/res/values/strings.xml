@@ -8,6 +8,7 @@
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password (optional)</string>
     <string name="action_sign_in">Sign in or register</string>
+    <string name="action_log_out">Log Out</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="action_add_user">Add User</string>
     <string name="error_invalid_email">This email address is invalid</string>
@@ -20,4 +21,5 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_sign_up">Sign Up</string>
 </resources>
