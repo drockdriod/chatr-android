@@ -40,7 +40,8 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
 
 
         if(chatrManager!!.mAuth.currentUser != null){
-            authenticate()
+            chatrManager!!.authenticate()
+            goToChatRooms()
         }
 
         // Set up the login form.
@@ -64,19 +65,6 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
         }
     }
 
-    private fun authenticate(){
-        doAsync {
-            FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
-
-                val authTokenMap : MutableMap<String, Any> = HashMap(1)
-                authTokenMap.put("auth_token",it.result.token)
-                FirestoreDbHelper().updateUser(chatrManager!!.mAuth.currentUser!!.uid,authTokenMap)
-            }
-        }
-
-        goToChatRooms()
-    }
-
     private fun goToChatRooms() {
         val intent = Intent(this, MainActivity::class.java)
 
@@ -94,7 +82,8 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
         if (chatrManager!!.mAuth.currentUser != null) {
             println(chatrManager!!.mAuth.currentUser?.email)
 
-            authenticate()
+            chatrManager!!.authenticate()
+            goToChatRooms()
             return
         }
 
@@ -141,7 +130,7 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
                     .addOnCompleteListener{task ->
                         if (task.isSuccessful) {
                             chatrManager!!.loadProfile()
-                            authenticate()
+                            chatrManager!!.authenticate()
 
                         } else {
                             // If sign in fails, display a message to the user.
@@ -214,6 +203,12 @@ class LoginActivity : GlobalStateActivity(), LoaderCallbacks<Cursor> {
 
     override fun onLoaderReset(cursorLoader: Loader<Cursor>) {
 
+    }
+
+    fun goToSignUp(view: View){
+        val intent = Intent(this,SignUpActivity::class.java)
+
+        startActivity(intent)
     }
 
 

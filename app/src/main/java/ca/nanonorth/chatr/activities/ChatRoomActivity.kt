@@ -152,11 +152,14 @@ class ChatRoomActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInt
         })
 
 
+
+
     }
 
 
     override fun onUserListItemClick(user: Author) {
         this@ChatRoomActivity.userDialog!!.dismiss()
+
         doAsync {
             this@ChatRoomActivity.chatRoom!!.addUser(user)
             uiThread {

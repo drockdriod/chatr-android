@@ -1,6 +1,7 @@
 package ca.nanonorth.chatr.activities
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
@@ -28,6 +29,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 import kotlinx.android.synthetic.main.nav_header.view.*
 import android.support.design.widget.NavigationView
+import com.google.common.cache.Cache
+import java.io.File
+import java.text.ParseException
+import java.text.SimpleDateFormat
 
 
 class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInteractionListener {
@@ -51,7 +56,7 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
         usersMap.put(user.id, user)
 
         val usersList : ArrayList<Author> = ArrayList()
-        usersList.add(user)
+        user.let { usersList.add(it) }
         usersList.add(chatrManager!!.author!!)
 
 
@@ -123,7 +128,6 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
         list_chatrooms.adapter = adapter
 
 //        GetChatroomsTask(this).execute(chatrManager!!.mAuth.currentUser!!.uid)
-        getChatRooms()
 
 
 
@@ -139,6 +143,7 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
         fab_add_chatroom.setOnClickListener {
             showAddUserDialog()
         }
+        getChatRooms()
 
     }
 
@@ -157,7 +162,7 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
             return@setNavigationItemSelectedListener when(it.itemId){
                 R.id.nav_logout -> {
                     FirebaseAuth.getInstance().signOut()
-                    val intent = Intent(this, SignUpActivity::class.java).apply {
+                    val intent = Intent(this, LoginActivity::class.java).apply {
                         putExtra("email",  chatrManager!!.author!!.getEmail())
                     }
 
@@ -219,53 +224,84 @@ class MainActivity : GlobalStateActivity(), UserDialogFragment.OnFragmentInterac
 
     private fun getChatRooms() {
         println("uid: ${chatrManager!!.mAuth.currentUser!!.uid}")
-        doAsync {
-            "${Constants.API_URL}/chatrooms/${chatrManager!!.mAuth.currentUser!!.uid}".httpGet()
-                    .responseJson { _, _, result ->
-                        //do something with response
-                        when (result) {
-                            is Result.Failure -> {
-                                val ex = result.getException()
-                                println(ex)
-                            }
-                            is Result.Success -> {
-                                val chatrooms: JSONArray = result.get().array()
-                                println("test 1")
-                                for (i in 0 until chatrooms.length()) {
-                                    val chatRoom = ChatRoom(chatrooms.getJSONObject(i)["ref"].toString(), convertToAuthorList(chatrooms.getJSONObject(i)["users"] as JSONArray) )
-                                    this@MainActivity.listChatRooms.add(chatRoom)
 
-                                    println("chatroom id: ${chatrooms.getJSONObject(i)["ref"]}")
-                                    FirebaseMessaging.getInstance().subscribeToTopic(chatrooms.getJSONObject(i)["ref"].toString())
+//        val chatroomCacheFile = File(applicationContext.cacheDir, "chatrooms.json")
 
-                                    val datum = HashMap<String, String>(2)
-                                    datum["title"] = this@MainActivity.listChatRooms[i].getTitle(chatrManager!!.mAuth.currentUser!!.uid)
-                                    datum["date"] = ""
+//        println(chatroomCacheFile)
 
-                                    if (chatrooms.getJSONObject(i).has("message")) {
-                                        val recentMessage = JSONObject(chatrooms.getJSONObject(i)["message"].toString())
-                                        datum["date"] = recentMessage["time_ago"].toString()
-                                        if (recentMessage.has("text")) {
-                                            var length = 20
-                                            if (recentMessage["text"].toString().length < 20) {
-                                                length = recentMessage["text"].toString().length
-                                            }
-                                            datum["title"] = datum["title"] + " - " + recentMessage["text"].toString().substring(0, length) + "..."
-                                        }
-                                    }
-                                    this@MainActivity.chatRoomTiles.add(datum)
+//        if(chatroomCacheFile.exists()){
+//            println("cache existant")
+//            addChatroomsToListAdapter(JSONArray(chatroomCacheFile.readText()))
+//        }
+//        else{
+
+            doAsync {
+                "${Constants.API_URL}/chatrooms/${chatrManager!!.mAuth.currentUser!!.uid}".httpGet()
+                        .responseJson { _, _, result ->
+                            //do something with response
+                            when (result) {
+                                is Result.Failure -> {
+                                    val ex = result.getException()
+                                    println("getchatrooms failed $ex")
+                                    println(ex.message)
+                                    println(ex.response.responseMessage)
                                 }
+                                is Result.Success -> {
+                                    val chatrooms: JSONArray = result.get().array()
+                                    println("cache non existant")
 
-                                this@MainActivity.adapter?.notifyDataSetChanged()
-                                println("test 2")
+                                    this@MainActivity.addChatroomsToListAdapter(chatrooms)
 
-
+                                }
                             }
                         }
+            }
+//        }
+
+
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private fun addChatroomsToListAdapter(chatrooms: JSONArray){
+        val chatroomCache = File.createTempFile("chatrooms.json", null, applicationContext.cacheDir)
+
+        chatroomCache.writeText(chatrooms.toString())
+
+        println("cache created:$chatroomCache")
+
+        for (i in 0 until chatrooms.length()) {
+            val chatRoom = ChatRoom(chatrooms.getJSONObject(i)["ref"].toString(), convertToAuthorList(chatrooms.getJSONObject(i)["users"] as JSONArray) )
+            this@MainActivity.listChatRooms.add(chatRoom)
+
+            println("chatroom id: ${chatrooms.getJSONObject(i)["ref"]}")
+            FirebaseMessaging.getInstance().subscribeToTopic(chatrooms.getJSONObject(i)["ref"].toString())
+
+            val datum = HashMap<String, String>(2)
+            datum["title"] = this@MainActivity.listChatRooms[i].getTitle(chatrManager!!.mAuth.currentUser!!.uid)
+            datum["date"] = ""
+            datum["date_created"] = ""
+
+            if (chatrooms.getJSONObject(i).has("message")) {
+                val recentMessage = JSONObject(chatrooms.getJSONObject(i)["message"].toString())
+                datum["date"] = recentMessage["time_ago"].toString()
+                datum["date_created"] = recentMessage["date_created"].toString()
+                if (recentMessage.has("text")) {
+                    var length = 20
+                    if (recentMessage["text"].toString().length < 20) {
+                        length = recentMessage["text"].toString().length
                     }
+                    datum["title"] = datum["title"] + " - " + recentMessage["text"].toString().substring(0, length) + "..."
+                }
+            }
+            this@MainActivity.chatRoomTiles.add(datum)
         }
 
+        this@MainActivity.chatRoomTiles.sortedWith(compareByDescending({
+            it.get("date_created")
+        }))
 
+
+        this@MainActivity.adapter?.notifyDataSetChanged()
     }
 
 }

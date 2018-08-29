@@ -43,6 +43,11 @@
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <service android:name=".services.PushNotificationService">
@@ -72,11 +77,7 @@
             android:name=".activities.SignUpActivity"
             android:label="@string/title_activity_sign_up">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

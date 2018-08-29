@@ -11,6 +11,7 @@ import android.view.*
 import android.widget.Button
 
 import ca.nanonorth.chatr.R
+import ca.nanonorth.chatr.activities.ChatRoomActivity
 import ca.nanonorth.chatr.adapters.UserListItemRecyclerAdapter
 import ca.nanonorth.chatr.models.Author
 import com.google.firebase.firestore.FirebaseFirestore
@@ -73,6 +74,7 @@ class UserDialogFragment : DialogFragment() {
         toolbar.setNavigationOnClickListener {
             this.dismiss()
         }
+
 
         usersRecycler = view.findViewById(R.id.users_recycler) as RecyclerView
         usersRecycler!!.layoutManager = LinearLayoutManager(this.context)
